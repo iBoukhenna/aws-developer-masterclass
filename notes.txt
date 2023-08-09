@@ -1,0 +1,219 @@
+
+Limitation Lambda Function
+    Uncompressed code & dependencies < 250MB
+    Compressed function package < 50MB
+    Total function packages in a region < 75GB
+
+    Ephemeral storage < 512MB
+    Maximum execution duration < 900seconds
+    Concurrent Lambda functions < 1000
+
+    Memory 128MB - 3GB
+    CPU scales with memory
+    VPC
+
+AWS Lambda Considerations
+    Event driven code
+    Code size limitations
+    Lambda as component
+    Performance limitations
+    Long running workloads
+
+1. Starting with Lambda Functions
+    create new lambda expression from templates
+    Schedule a periodic check for any url
+    make name
+    create rule
+    schedule expression 
+    rate(5 minutes)
+    add environment variables
+    check policy name is AWSLambdaExecutionRole
+    create new test event with amazon couldwatch
+    adding cloud watch alerts
+    go to cloudwatch alarms
+    create new alarm
+    select metric with name of lambda
+    select matric errors
+    config the metric
+    config the notification
+    create new topic
+    add email
+
+
+2. Using Lambda and Third Party APIs
+    Create Parameter Store in AWS Systems Manager
+        Select SecureString
+        KMS key source : select My current account
+        KMS key id : select alias/aws/ssm
+    Create new IAM
+        Create Group admins with policy : AdministratorAccess
+        select Two access type
+        select password
+        downlaod access key and secret
+        aws configure
+        enter access key and secret
+
+    Execute locally function :
+        install boto3
+        pip install boto3
+        enter to python
+        python
+        adding keys to parameter store with python execution code
+        check diffrent function
+
+    Building lambda function package file : 
+        rm -r .\.venv\
+        rm -r .\__pycache__\
+        python -m venv .venv
+        .\.venv\Scripts\activate
+        mkdir setup
+        cp .\sparrow.py .\setup\
+        cp .\ssm_secrets.py .\setup\
+        cd .\setup\
+        pip install -r ..\requirements.txt -t .
+        tar.exe -a -cf ../package.zip *
+        cd ..
+        rm -r .\setup\
+        deactivate
+        rm -r .\.venv\
+    Deploying and Testing Lambda function : 
+        Create new lambda expression from scratch
+        Add Permission :  AWS KMS decryption permissions
+        Add Policy : AmazonSSMReadOnlyAccess
+        Create new rule : DailyAction
+            schedule expressio : rate(1 day)
+        Upload the package zip
+        Configure test event :
+            Create test event with template Amazon CloudWatch
+            dailytest
+
+
+3. Integration Other AWS Services with Lambda
+    aws configure
+    aws lambda list-functions --max-items 10
+    aws s3 ls
+    aws s3 mb s3://gpc-email-templates-iboukhenna
+    aws s3 ls
+    aws s3 ls gpc-email-templates-iboukhenna
+    aws s3 cp .\templates\ s3://gpc-email-templates-iboukhenna --recursive
+    aws s3 ls gpc-email-templates-iboukhenna
+
+    add identities with address email and verification
+    create new role with these policies : AmazoneSESFullAccess, AmazoneS3FullAccess and AWSLambdaBasicExecutionRole
+    gpc_cuckoo_role
+
+    python -m venv .venv
+    .\.venv\Scripts\activate
+    pip install Jinja2
+    pip install boto3
+    python
+    > import cuckoo
+    > event = {
+    "id": "cdc73f9d-aea9-11e3-9d5a-835b769c0d9c",
+    "detail-type": "Scheduled Event",
+    "source": "aws.events",
+    "account": "123456789012",
+    "time": "1970-01-01T00:00:00Z",
+    "region": "us-east-1",
+    "resources": [
+        "arn:aws:events:us-east-1:123456789012:rule/pickup"
+    ],
+    "detail": {}
+    }
+    > event
+    > cuckoo.handler(event, "context")
+    > event = {
+    "id": "cdc73f9d-aea9-11e3-9d5a-835b769c0d9c",
+    "detail-type": "Scheduled Event",
+    "source": "aws.events",
+    "account": "123456789012",
+    "time": "1970-01-01T00:00:00Z",
+    "region": "us-east-1",
+    "resources": [
+        "arn:aws:events:us-east-1:123456789012:rule/come_to_work"
+    ],
+    "detail": {}
+    }
+    > cuckoo.handler(event, "context")
+    > event = {
+    "id": "cdc73f9d-aea9-11e3-9d5a-835b769c0d9c",
+    "detail-type": "Scheduled Event",
+    "source": "aws.events",
+    "account": "123456789012",
+    "time": "1970-01-01T00:00:00Z",
+    "region": "us-east-1",
+    "resources": [
+        "arn:aws:events:us-east-1:123456789012:rule/daily_tasks"
+    ],
+    "detail": {}
+    }
+    > cuckoo.handler(event, "context")
+    > exit()
+    deactivate
+    rm -r .\.venv\
+    rm -r .\__pycache__\
+    .\windows_setup.bat
+    aws iam list-roles
+    aws lambda create-function --function-name gpc_cuckoo --runtime python3.11 --role arn:aws:iam::466169199770:role/gpc_cuckoo_role  --handler cuckoo.handler --zip-file fileb://./package.zip
+    aws events put-rule --name come_to_work --schedule-expression 'cron(0 12 ? * MON-FRI *)'
+    aws events put-rule --name daily_tasks --schedule-expression 'cron(0 5 ? * MON-FRI *)'
+    aws events put-rule --name pickup --schedule-expression 'cron(0 22 ? * MON-FRI *)'
+    aws lambda add-permission --function-name gpc_cuckoo --statement-id 1 --action 'lambda:InvokeFunction' --principal events.amazonaws.com --source-arn arn:aws:events:us-east-1:466169199770:rule/come_to_work
+    aws lambda add-permission --function-name gpc_cuckoo --statement-id 2 --action 'lambda:InvokeFunction' --principal events.amazonaws.com --source-arn arn:aws:events:us-east-1:466169199770:rule/daily_tasks
+    aws lambda add-permission --function-name gpc_cuckoo --statement-id 3 --action 'lambda:InvokeFunction' --principal events.amazonaws.com --source-arn arn:aws:events:us-east-1:466169199770:rule/pickup
+    aws events put-targets --rule daily_tasks --targets '{\"Id\": \"1\", \"Arn\": \"arn:aws:lambda:us-east-1:466169199770:function:gpc_cuckoo\"}'
+    aws events put-targets --rule come_to_work --targets '{\"Id\": \"2\", \"Arn\": \"arn:aws:lambda:us-east-1:466169199770:function:gpc_cuckoo\"}'
+    aws events put-targets --rule pickup --targets '{\"Id\": \"3\", \"Arn\": \"arn:aws:lambda:us-east-1:466169199770:function:gpc_cuckoo\"}'
+
+4. Modern serverless deployment
+    npm install -g serverless
+    cd gpc-api
+    serverless deploy
+    aws dynamodb list-tables
+    serverless remove
+
+    # IAM Role
+    iamRoleStatements:
+        - Effect: Allow
+        Action:
+            - dynamodb:PutItem
+            - SES:*
+        Resource: "arn:aws:dynamodb:us-east-1:*:table/users"
+
+    # IAM Role v2
+    iamRoleStatements:
+        - Effect: Allow
+        Action:
+            - dynamodb:PutItem
+        Resource: "arn:aws:dynamodb:us-east-1:*:table/users"
+        - Effect: Allow
+        Action:
+            - SES:*
+        Resource: "*"
+
+    # The HTTP API Configuration
+    functions:
+    createUser:
+        handler: handler.handler
+        events:
+        - http:
+            path: /user
+            method: post
+            cors: true
+
+    # The DynamoDB Resource:
+    resources:
+    Resources:
+        usersTable:
+        Type: AWS::DynamoDB::Table
+        Properties:
+            TableName: users
+            AttributeDefinitions:
+            - AttributeName: email
+                AttributeType: S
+            KeySchema:
+            - AttributeName: email
+                KeyType: HASH
+            ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
