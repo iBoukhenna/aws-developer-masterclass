@@ -25,7 +25,7 @@ public class InventoryFindFunctionTest {
         TestContext ctx = new TestContext();
 
         // TODO: customize your context here if needed.
-        ctx.setFunctionName("Your Function Name");
+        ctx.setFunctionName("InventoryFindFunction");
 
         return ctx;
     }
@@ -38,6 +38,6 @@ public class InventoryFindFunctionTest {
         String output = handler.handleRequest(input, ctx);
 
         // TODO: validate output here if needed.
-        Assert.assertEquals("Hello from Lambda!", output);
+        Assert.assertEquals("Ibrahim's Test Data from S3", output);
     }
 }
