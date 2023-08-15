@@ -38,6 +38,6 @@ public class InventoryFindFunctionTest {
         String output = handler.handleRequest(input, ctx);
 
         // TODO: validate output here if needed.
-        Assert.assertEquals("Ibrahim's Test Data from S3", output);
+        Assert.assertEquals("Product [id=100, tooType=Hammer, brand=Stanley, name=5oz Magnetic Tack Hammer, count=20]", output);
     }
 }

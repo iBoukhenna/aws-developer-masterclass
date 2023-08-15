@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.google.gson.Gson;
 
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.regions.Region;
@@ -20,18 +21,16 @@ public class InventoryFindFunction implements RequestHandler<Object, String> {
 
         Region region = Region.US_EAST_1;
         S3Client s3Client = S3Client.builder().region(region).build();
-        ResponseInputStream<?> objectData = s3Client.getObject(GetObjectRequest.builder().bucket("handy-inventory-data-iboukhenna").key("s3testdata.txt").build());
+        ResponseInputStream<?> objectData = s3Client.getObject(GetObjectRequest.builder().bucket("handy-inventory-data-iboukhenna").key("handy-tool-catalog.json").build());
 
         InputStreamReader inputStreamReader = new InputStreamReader(objectData);
         BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-        String outputString = null;
-        try {
-            outputString = bufferedReader.readLine();
-            bufferedReader.close();
-        } catch (IOException ioe) {
-            context.getLogger().log("An Exception was generated when attempting to readLine() BufferedReader : " + ioe.getMessage());
-        }
-        return outputString;
+
+        Product[] products = null;
+
+        Gson gson = new Gson();
+        products = gson.fromJson(bufferedReader, Product[].class);
+        return products[0].toString();
     }
 
 }
