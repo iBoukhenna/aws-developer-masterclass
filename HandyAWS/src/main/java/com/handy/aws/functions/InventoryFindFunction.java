@@ -1,7 +1,6 @@
 package com.handy.aws.functions;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 
 import com.amazonaws.services.lambda.runtime.Context;
@@ -13,12 +12,17 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 
-public class InventoryFindFunction implements RequestHandler<Object, String> {
+public class InventoryFindFunction implements RequestHandler<HttpQueryStringRequest, HttpProductResponse> {
 
     @Override
-    public String handleRequest(Object input, Context context) {
-        context.getLogger().log("Input: " + input);
+    public HttpProductResponse handleRequest(HttpQueryStringRequest request, Context context) {
+        String idAsString = (String) request.getQueryStringParameters().get("id");
+        Integer productId = Integer.parseInt(idAsString);
+        Product product = getProductById(productId);
+        return new HttpProductResponse(product);
+    }
 
+    private Product getProductById(int productId) {
         Region region = Region.US_EAST_1;
         S3Client s3Client = S3Client.builder().region(region).build();
         ResponseInputStream<?> objectData = s3Client.getObject(GetObjectRequest.builder().bucket("handy-inventory-data-iboukhenna").key("handy-tool-catalog.json").build());
@@ -30,7 +34,12 @@ public class InventoryFindFunction implements RequestHandler<Object, String> {
 
         Gson gson = new Gson();
         products = gson.fromJson(bufferedReader, Product[].class);
-        return products[0].toString();
+        for (Product product : products) {
+            if (product.getId() == productId) {
+                return product;
+            }
+        }
+        return null;
     }
 
 }

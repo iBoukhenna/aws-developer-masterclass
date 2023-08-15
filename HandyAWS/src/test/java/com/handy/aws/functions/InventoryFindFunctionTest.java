@@ -1,24 +1,27 @@
 package com.handy.aws.functions;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.amazonaws.services.lambda.runtime.Context;
+import com.google.gson.Gson;
 
 /**
  * A simple test harness for locally invoking your Lambda function handler.
  */
 public class InventoryFindFunctionTest {
 
-    private static Object input;
+    private static HttpQueryStringRequest input;
 
     @BeforeClass
     public static void createInput() throws IOException {
         // TODO: set up your sample input object here.
-        input = null;
+        input = new HttpQueryStringRequest();
     }
 
     private Context createContext() {
@@ -35,9 +38,15 @@ public class InventoryFindFunctionTest {
         InventoryFindFunction handler = new InventoryFindFunction();
         Context ctx = createContext();
 
-        String output = handler.handleRequest(input, ctx);
+        Gson gson = new Gson();
+
+        Map<String, String> queryStringParameters = new HashMap<>();
+        queryStringParameters.put("id", "102");
+        input.setQueryStringParameters(queryStringParameters);
+
+        HttpProductResponse output = handler.handleRequest(input, ctx);
 
         // TODO: validate output here if needed.
-        Assert.assertEquals("Product [id=100, tooType=Hammer, brand=Stanley, name=5oz Magnetic Tack Hammer, count=20]", output);
+        Assert.assertEquals(gson.toJson(new Product(102, "Hammer", "DeWalt", "15oz MIG Weld", 14)), output.getBody());
     }
 }
